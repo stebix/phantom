@@ -5,5 +5,5 @@ Pretty basic but hopegully useful :)
 
 ## TODO
 
-- [] Add intrinsic multi-compartment functionality
-- [] Add easier data input user interface
+- [ ] Add intrinsic multi-compartment functionality
+- [ ] Add easier data input user interface

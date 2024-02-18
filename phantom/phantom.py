@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.axes as axes
 
-from typing import Iterable
+from typing import Iterable, Literal
 
 import attrs
 import skimage.morphology as morph
@@ -71,6 +71,14 @@ class BasicPhantom:
     compartments: list[CompartmentSpec]
     hostmedium: EnvironmentSpec = attrs.field(default=DEFAULT_WATER)
     background: EnvironmentSpec = attrs.field(default=DEFAULT_BACKGROUND)
+
+
+    def compartments_entirety(self) -> list[CompartmentSpec, EnvironmentSpec]:
+        """
+        Get the entirety of compartments, i.e. foreground, hostmedium and background.
+        """
+        return [self.background, self.hostmedium, *self.compartments]
+
         
     def plot_array(self, ax: axes.Axes | None = None,
                    show_int_labels: bool = False,
@@ -156,3 +164,20 @@ class BasicPhantom:
         return cls(mask, compartments)
         
 
+    def map(self, parameter: Literal['PD', 'T1', 'T2']) -> np.ndarray:
+        """
+        Return the requested parameter map.
+        """
+        parameter_map = np.full(shape=self.array.shape,
+                                fill_value=np.nan,
+                                dtype=np.float32)
+                                
+        for compartment in self.compartments_entirety():
+            pvalue = getattr(compartment.magnetization_params, parameter)
+            mask = self.array == compartment.labels.int_ID
+            parameter_map[mask] = pvalue
+
+        if np.any(np.isnan(parameter_map)):
+            raise RuntimeError('warp core breach: detected NaN in parameter map')
+        
+        return parameter_map
